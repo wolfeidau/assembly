@@ -6,7 +6,7 @@ import (
 	"github.com/wolfeidau/assembly/assembly"
 )
 
-func TestPost(t *testing.T) {
+func TestUser(t *testing.T) {
 	setup()
 
 	wantUser := &assembly.User{ID: 1, Login: assembly.String("jdoe")}
@@ -33,7 +33,7 @@ func TestPost(t *testing.T) {
 	}
 }
 
-func TestPosts_List(t *testing.T) {
+func TestUser_List(t *testing.T) {
 	setup()
 
 	wantUsers := []*assembly.User{{ID: 1}}

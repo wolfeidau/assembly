@@ -6,13 +6,16 @@ import (
 )
 
 var (
-	ErrUserNotFound = errors.New("user not found")
+	// ErrUserNotFound user was not found.
+	ErrUserNotFound    = errors.New("user not found")
+	ErrUserLoginExists = errors.New("user already exists in the system with that login")
 )
 
 // User represents an assembly user.
 type User struct {
 	ID        int        `json:"id,omitempty"`
 	Login     *string    `json:"login,omitempty"`
+	Password  *string    `json:"password,omitempty"`
 	Name      *string    `json:"name,omitempty"`
 	Email     *string    `json:"email,omitempty"`
 	CreatedAt *Timestamp `json:"created_at,omitempty"`
@@ -23,6 +26,12 @@ type User struct {
 type UsersService interface {
 	// Get fetches a user.
 	Get(login string) (*User, Response, error)
+
+	// Registers a new user.
+	Create(user *User) (*User, Response, error)
+
+	// Updates an existing user.
+	Update(user *User) (*User, Response, error)
 
 	// List fetches all user.
 	List(opt *UsersListOptions) ([]*User, Response, error)
@@ -65,9 +74,43 @@ func (s *usersService) Get(login string) (*User, Response, error) {
 	return user, resp, nil
 }
 
+func (s *usersService) Create(user *User) (*User, Response, error) {
+	u := "users"
+
+	req, err := s.client.NewRequest("POST", u, user)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var newUser *User
+	resp, err := s.client.Do(req, &newUser)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return newUser, resp, nil
+}
+
+func (s *usersService) Update(user *User) (*User, Response, error) {
+	u := "users"
+
+	req, err := s.client.NewRequest("PUT", u, user)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var newUser *User
+	resp, err := s.client.Do(req, &newUser)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return newUser, resp, nil
+}
+
 func (s *usersService) List(opt *UsersListOptions) ([]*User, Response, error) {
 
-	u := fmt.Sprintf("users")
+	u := "users"
 
 	u, err := addOptions(u, opt)
 	if err != nil {
@@ -89,14 +132,24 @@ func (s *usersService) List(opt *UsersListOptions) ([]*User, Response, error) {
 }
 
 type MockUsersService struct {
-	GetFunc  func(login string) (*User, Response, error)
-	ListFunc func(opt *UsersListOptions) ([]*User, Response, error)
+	GetFunc    func(login string) (*User, Response, error)
+	CreateFunc func(user *User) (*User, Response, error)
+	UpdateFunc func(user *User) (*User, Response, error)
+	ListFunc   func(opt *UsersListOptions) ([]*User, Response, error)
 }
 
 var _ UsersService = &MockUsersService{}
 
 func (s *MockUsersService) Get(login string) (*User, Response, error) {
 	return s.GetFunc(login)
+}
+
+func (s *MockUsersService) Create(user *User) (*User, Response, error) {
+	return s.CreateFunc(user)
+}
+
+func (s *MockUsersService) Update(user *User) (*User, Response, error) {
+	return s.UpdateFunc(user)
 }
 
 func (s *MockUsersService) List(opt *UsersListOptions) ([]*User, Response, error) {
